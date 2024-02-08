@@ -4,22 +4,35 @@ import { useLocalSearchParams, useNavigation } from "expo-router";
 import { PRODUCTS } from "@/utils/data/products";
 import { formatCurrency } from "@/utils/functions/formatCurrency";
 
+import { Redirect } from "expo-router";
+
 import { Button } from "@/components/button";
 import { LinkButton } from "@/components/link-button";
 import { Feather } from "@expo/vector-icons";
 
 import { useCartStore } from "@/stores/cart-store";
+import { useEffect, useRef } from "react";
 
 export default function Products() {
   const cartStore = useCartStore();
   const navigation = useNavigation();
   const { id } = useLocalSearchParams();
 
-  const product = PRODUCTS.filter((item) => item.id === id)[0];
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    scrollViewRef.current?.flashScrollIndicators();
+  }, []);
+
+  const product = PRODUCTS.find((item) => item.id === id);
 
   function handleAddToCart() {
-    cartStore.add(product);
+    if (product) cartStore.add(product);
     navigation.goBack();
+  }
+
+  if (!product) {
+    return <Redirect href='/' />;
   }
 
   return (
@@ -30,10 +43,11 @@ export default function Products() {
         resizeMode='cover'
       />
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        className='p-5 mt-4 flex-1'
-      >
+      <ScrollView ref={scrollViewRef} className='p-5 flex-1'>
+        <Text className='text-white text-xl font-heading '>
+          {product.title}
+        </Text>
+
         <Text className='text-lime-400 text-2xl font-heading my-2'>
           {formatCurrency(product.price)}
         </Text>
@@ -44,14 +58,14 @@ export default function Products() {
         {product.ingredients.map((ingredient) => (
           <Text
             key={ingredient}
-            className='text-slate-400 font-body text-base leading-6'
+            className='text-slate-300 font-body text-base leading-6'
           >
             {"\u2022"} {ingredient}
           </Text>
         ))}
       </ScrollView>
 
-      <View className='p-5 pb-8 gap-5'>
+      <View className='p-5 pb-4 gap-5'>
         <Button onPress={handleAddToCart}>
           <Button.Icon>
             <Feather name='plus-circle' size={20} />
